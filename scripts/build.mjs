@@ -1,5 +1,6 @@
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { transform } from "esbuild";
 
 const root = process.cwd();
 const dist = join(root, "dist");
@@ -108,4 +109,40 @@ export function normalizeDirection(direction?: string): Direction;
 export function splitTextToSegments(text: string): TranslationSegment[];
 `);
 
+await writeFile(join(dist, "nmt-enfr.min.js"), await buildCdnBundle());
+
 console.log(`Wrote ${dist}`);
+
+async function buildCdnBundle() {
+  const modulePaths = [
+    "src/text.js",
+    "src/glossary.js",
+    "src/planning.js",
+    "src/document.js",
+    "src/client.js",
+  ];
+  const modules = await Promise.all(modulePaths.map((path) => readFile(join(root, path), "utf8")));
+  const workerSource = await minifyJavascript(await readFile(join(root, "src/worker.js"), "utf8"));
+  const source = modules
+    .map((content) => transformBrowserModule(content))
+    .join("\n");
+  const bundle = `(function(globalThis){"use strict";const defaultWorkerSource=${JSON.stringify(workerSource)};let defaultWorkerUrlCache=null;function defaultWorkerUrl(){if(defaultWorkerUrlCache)return defaultWorkerUrlCache;const blob=new Blob([defaultWorkerSource],{type:"text/javascript"});defaultWorkerUrlCache=URL.createObjectURL(blob);return defaultWorkerUrlCache;}\n${source}\nglobalThis.NmtEnfr=Object.freeze({createTranslator,prepareDocument,reconstructDocument,isSupportedDocumentFile,activeEntriesForDirection,applyGlossaryToSegments,createGlossaryEntry,exportGlossaryCsv,maskTextWithGlossary,parseGlossaryCsv,recommendWorkerCount,splitQueueIntoBatches,modelForDirection,normalizeDirection,splitTextToSegments});})(globalThis);`;
+  return minifyJavascript(bundle);
+}
+
+function transformBrowserModule(content) {
+  return content
+    .replace(/^import\s+[^;]+;\n?/gm, "")
+    .replace(/\bexport\s+(async\s+function|function|class|const|let|var)\s+/g, "$1 ")
+    .replace(/const currentUrl = new URL\(import\.meta\.url\);\n\s+return \{/g, "return {")
+    .replace(/workerUrl: options\.workerUrl \|\| new URL\("\.\/worker\.js", currentUrl\)\.href,/g, "workerUrl: options.workerUrl || defaultWorkerUrl(),");
+}
+
+async function minifyJavascript(source) {
+  const result = await transform(source, {
+    format: "iife",
+    minify: true,
+    target: "es2020",
+  });
+  return result.code.trim();
+}

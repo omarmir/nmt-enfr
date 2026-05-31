@@ -18,6 +18,23 @@ Or import the ESM build from a CDN:
 </script>
 ```
 
+For a single minified browser script, use the global CDN bundle:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/nmt-enfr/dist/nmt-enfr.min.js"></script>
+<script>
+  const { createTranslator } = NmtEnfr;
+</script>
+```
+
+jsDelivr can also serve the open source GitHub project directly. Pin a release tag when possible:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@main/dist/nmt-enfr.min.js"></script>
+```
+
+The GitHub CDN base was verified with `https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@main/package.json`. The minified bundle URL will return 200 after `dist/nmt-enfr.min.js` is committed to `main` or a tagged release.
+
 ## Basic Usage
 
 ```js

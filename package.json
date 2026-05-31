@@ -20,6 +20,9 @@
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "browser": "./dist/nmt-enfr.min.js",
+  "unpkg": "./dist/nmt-enfr.min.js",
+  "jsdelivr": "./dist/nmt-enfr.min.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -42,5 +45,8 @@
     "@huggingface/transformers": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
   }
 }
