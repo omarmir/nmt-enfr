@@ -1,5 +1,5 @@
 let config = {
-  transformersUrl: "https://cdn.jsdelivr.net/npm/@huggingface/transformers/dist/transformers.min.js",
+  transformersUrl: "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0/dist/transformers.min.js",
   wasmBaseUrl: "",
   modelsBaseUrl: "",
   allowRemoteModels: true,
@@ -39,7 +39,7 @@ async function getTransformers() {
 async function loadTranslationModel(model, dtype = "q8", announceReady = true) {
   const modelId = resolveModelId(model || "opus-mt-en-fr");
   if (translator && activeTranslationModel === modelId && activeTranslationDtype === dtype) {
-    if (announceReady) self.postMessage({ status: "ready", model });
+    if (announceReady) self.postMessage({ status: "ready", model, dtype });
     return;
   }
 
@@ -47,14 +47,33 @@ async function loadTranslationModel(model, dtype = "q8", announceReady = true) {
   await disposeTranslationModel();
   activeTranslationModel = modelId;
   activeTranslationDtype = dtype;
-  translator = await pipeline("translation", modelId, {
+  try {
+    translator = await createTranslationPipeline(pipeline, modelId, model, dtype);
+  } catch (error) {
+    if (!shouldRetryAsFp32(error, dtype)) throw error;
+    await disposeTranslationModel();
+    activeTranslationModel = modelId;
+    activeTranslationDtype = "fp32";
+    console.warn(`Failed to load ${modelId} as ${dtype}; retrying with fp32.`, error);
+    translator = await createTranslationPipeline(pipeline, modelId, model, "fp32");
+  }
+  if (announceReady) self.postMessage({ status: "ready", model, dtype: activeTranslationDtype });
+}
+
+function createTranslationPipeline(pipeline, modelId, model, dtype) {
+  return pipeline("translation", modelId, {
     dtype,
     device: "wasm",
     progress_callback: (progress) => {
       self.postMessage({ status: "downloading", model, result: progress });
     },
   });
-  if (announceReady) self.postMessage({ status: "ready", model });
+}
+
+function shouldRetryAsFp32(error, dtype) {
+  if (dtype === "fp32") return false;
+  const message = error?.message || String(error || "");
+  return /TransposeDQWeightsForMatMulNBits|Missing required scale|qdq_actions|Can't create a session/i.test(message);
 }
 
 async function disposeTranslationModel() {

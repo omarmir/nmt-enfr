@@ -9,6 +9,8 @@ const DEFAULT_GENERATION = {
   early_stopping: true,
 };
 
+const DEFAULT_TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.0/dist/transformers.min.js";
+
 export function createTranslator(options = {}) {
   return new BrowserTranslator(options);
 }
@@ -53,7 +55,9 @@ class BrowserTranslator {
     const direction = normalizeDirection(options.direction || this.activeDirection);
     const dtype = options.dtype || this.options.dtype;
     const model = options.model || modelForDirection(direction);
-    if (this.modelReady && this.activeModel === model && this.activeDtype === dtype) return { model, direction, dtype };
+    if (this.modelReady && this.activeModel === model && (this.activeDtype === dtype || this.activeDtype === "fp32")) {
+      return { model, direction, dtype: this.activeDtype, requestedDtype: dtype };
+    }
 
     this.disposeWorkers(true);
     this.modelReady = false;
@@ -66,9 +70,11 @@ class BrowserTranslator {
       config: workerConfig(this.options),
     });
     worker.worker.postMessage({ task: "model", model, dtype });
-    await waitForWorkerReady(worker);
+    const ready = await waitForWorkerReady(worker);
+    const actualDtype = ready?.dtype || dtype;
     this.modelReady = true;
-    return { model, direction, dtype };
+    this.activeDtype = actualDtype;
+    return { model, direction, dtype: actualDtype, requestedDtype: dtype };
   }
 
   async translateText(text, options = {}) {
@@ -96,7 +102,8 @@ class BrowserTranslator {
       };
     }
 
-    await this.loadModel({ direction, dtype, model: options.model });
+    const loaded = await this.loadModel({ direction, dtype, model: options.model });
+    const actualDtype = loaded.dtype || dtype;
     this.cancelled = false;
     this.translated = [];
     this.completedCount = 0;
@@ -120,7 +127,7 @@ class BrowserTranslator {
       this.processQueue({
         direction,
         model: options.model || modelForDirection(direction),
-        dtype,
+        dtype: actualDtype,
         generation,
       });
     });
@@ -197,7 +204,8 @@ class BrowserTranslator {
       if (data.status === "ready") {
         workerState.status = "free";
         workerState.model = data.model || workerState.model;
-        for (const waiter of workerState.readyWaiters.splice(0)) waiter.resolve();
+        workerState.dtype = data.dtype || workerState.dtype;
+        for (const waiter of workerState.readyWaiters.splice(0)) waiter.resolve(data);
         this.processQueue();
         return;
       }
@@ -318,7 +326,7 @@ function waitForWorkerReady(workerState) {
 function normalizeClientOptions(options) {
   const currentUrl = new URL(import.meta.url);
   return {
-    transformersUrl: options.transformersUrl || "https://cdn.jsdelivr.net/npm/@huggingface/transformers/dist/transformers.min.js",
+    transformersUrl: options.transformersUrl || DEFAULT_TRANSFORMERS_URL,
     workerUrl: options.workerUrl || new URL("./worker.js", currentUrl).href,
     wasmBaseUrl: options.wasmBaseUrl || "",
     modelsBaseUrl: options.modelsBaseUrl || "",
