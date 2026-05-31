@@ -20,6 +20,8 @@ export interface TranslatorOptions {
   modelsBaseUrl?: string;
   allowRemoteModels?: boolean;
   allowLocalModels?: boolean;
+  useBrowserCache?: boolean;
+  useFSCache?: boolean;
   dtype?: "q8" | string;
   maxWorkers?: number;
   hardwareConcurrency?: number;

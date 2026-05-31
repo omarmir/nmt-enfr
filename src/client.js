@@ -330,6 +330,8 @@ function normalizeClientOptions(options) {
     modelsBaseUrl: options.modelsBaseUrl || "",
     allowRemoteModels: options.allowRemoteModels !== false,
     allowLocalModels: options.allowLocalModels !== false,
+    useBrowserCache: options.useBrowserCache !== false,
+    useFSCache: options.useFSCache === true,
     dtype: options.dtype || "q8",
     maxWorkers: Math.max(1, Number(options.maxWorkers) || 1),
     hardwareConcurrency: Number(options.hardwareConcurrency) || globalThis.navigator?.hardwareConcurrency || 1,
@@ -347,5 +349,7 @@ function workerConfig(options) {
     modelsBaseUrl: options.modelsBaseUrl,
     allowRemoteModels: options.allowRemoteModels,
     allowLocalModels: options.allowLocalModels,
+    useBrowserCache: options.useBrowserCache,
+    useFSCache: options.useFSCache,
   };
 }

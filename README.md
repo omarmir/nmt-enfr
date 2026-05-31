@@ -57,6 +57,8 @@ translator.dispose();
 ## Asset Loading
 
 By default, the package loads remote public `Xenova/opus-mt-en-fr` and `Xenova/opus-mt-fr-en` model assets through Transformers.js.
+Transformers.js browser caching is enabled by default so model assets can be reused by the browser after the first download.
+Pass `useBrowserCache: false` to opt out.
 
 For a self-hosted deployment, pass asset URLs:
 

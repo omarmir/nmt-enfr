@@ -4,6 +4,8 @@ let config = {
   modelsBaseUrl: "",
   allowRemoteModels: true,
   allowLocalModels: true,
+  useBrowserCache: true,
+  useFSCache: false,
 };
 
 let transformersModule = null;
@@ -22,8 +24,8 @@ async function getTransformers() {
   }
   env.allowLocalModels = config.allowLocalModels !== false;
   env.allowRemoteModels = config.allowRemoteModels !== false;
-  env.useBrowserCache = false;
-  env.useFSCache = false;
+  env.useBrowserCache = config.useBrowserCache !== false;
+  env.useFSCache = config.useFSCache === true;
 
   if (env.backends?.onnx?.wasm) {
     if (config.wasmBaseUrl) {
