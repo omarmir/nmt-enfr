@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>nmt-enfr static example</title>
+  </head>
+  <body>
+    <main>
+      <h1>nmt-enfr</h1>
+      <textarea id="source" rows="6">Hello world.</textarea>
+      <p>
+        <select id="direction">
+          <option value="en-fr">English to French</option>
+          <option value="fr-en">French to English</option>
+        </select>
+        <button id="translate">Translate</button>
+      </p>
+      <progress id="progress" max="100" value="0"></progress>
+      <pre id="output"></pre>
+    </main>
+    <script type="module">
+      import { createTranslator } from "../../dist/index.js";
+
+      const translator = createTranslator({ maxWorkers: 1 });
+      translator.on("translation-progress", (event) => {
+        document.querySelector("#progress").value = event.percent;
+      });
+
+      document.querySelector("#translate").addEventListener("click", async () => {
+        const result = await translator.translateText(document.querySelector("#source").value, {
+          direction: document.querySelector("#direction").value,
+        });
+        document.querySelector("#output").textContent = result.text;
+      });
+    </script>
+  </body>
+</html>
