@@ -55,8 +55,8 @@ class BrowserTranslator {
     const direction = normalizeDirection(options.direction || this.activeDirection);
     const dtype = options.dtype || this.options.dtype;
     const model = options.model || modelForDirection(direction);
-    if (this.modelReady && this.activeModel === model && (this.activeDtype === dtype || this.activeDtype === "fp32")) {
-      return { model, direction, dtype: this.activeDtype, requestedDtype: dtype };
+    if (this.modelReady && this.activeModel === model && this.activeDtype === dtype) {
+      return { model, direction, dtype };
     }
 
     this.disposeWorkers(true);
@@ -70,11 +70,9 @@ class BrowserTranslator {
       config: workerConfig(this.options),
     });
     worker.worker.postMessage({ task: "model", model, dtype });
-    const ready = await waitForWorkerReady(worker);
-    const actualDtype = ready?.dtype || dtype;
+    await waitForWorkerReady(worker);
     this.modelReady = true;
-    this.activeDtype = actualDtype;
-    return { model, direction, dtype: actualDtype, requestedDtype: dtype };
+    return { model, direction, dtype };
   }
 
   async translateText(text, options = {}) {

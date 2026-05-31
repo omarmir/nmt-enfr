@@ -47,16 +47,7 @@ async function loadTranslationModel(model, dtype = "q8", announceReady = true) {
   await disposeTranslationModel();
   activeTranslationModel = modelId;
   activeTranslationDtype = dtype;
-  try {
-    translator = await createTranslationPipeline(pipeline, modelId, model, dtype);
-  } catch (error) {
-    if (!shouldRetryAsFp32(error, dtype)) throw error;
-    await disposeTranslationModel();
-    activeTranslationModel = modelId;
-    activeTranslationDtype = "fp32";
-    console.warn(`Failed to load ${modelId} as ${dtype}; retrying with fp32.`, error);
-    translator = await createTranslationPipeline(pipeline, modelId, model, "fp32");
-  }
+  translator = await createTranslationPipeline(pipeline, modelId, model, dtype);
   if (announceReady) self.postMessage({ status: "ready", model, dtype: activeTranslationDtype });
 }
 
@@ -64,16 +55,18 @@ function createTranslationPipeline(pipeline, modelId, model, dtype) {
   return pipeline("translation", modelId, {
     dtype,
     device: "wasm",
+    session_options: sessionOptionsForDtype(dtype),
     progress_callback: (progress) => {
       self.postMessage({ status: "downloading", model, result: progress });
     },
   });
 }
 
-function shouldRetryAsFp32(error, dtype) {
-  if (dtype === "fp32") return false;
-  const message = error?.message || String(error || "");
-  return /TransposeDQWeightsForMatMulNBits|Missing required scale|qdq_actions|Can't create a session/i.test(message);
+function sessionOptionsForDtype(dtype) {
+  if (dtype !== "q8") return {};
+  return {
+    graphOptimizationLevel: "disabled",
+  };
 }
 
 async function disposeTranslationModel() {
