@@ -10,30 +10,24 @@ Framework-neutral browser EN-FR and FR-EN neural machine translation for Transfo
 npm install nmt-enfr
 ```
 
-Or import the ESM build from a CDN:
+Or import the ESM build from jsDelivr's GitHub CDN:
 
 ```html
 <script type="module">
-  import { createTranslator } from "https://cdn.jsdelivr.net/npm/nmt-enfr/dist/index.js";
+  import { createTranslator } from "https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@latest/dist/index.js";
 </script>
 ```
 
-For a single minified browser script, use the global CDN bundle:
+For a single minified browser script, use the global GitHub CDN bundle:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/nmt-enfr/dist/nmt-enfr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@latest/dist/nmt-enfr.min.js"></script>
 <script>
   const { createTranslator } = NmtEnfr;
 </script>
 ```
 
-jsDelivr can also serve the open source GitHub project directly. Pin a release tag when possible:
-
-```html
-<script src="https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@main/dist/nmt-enfr.min.js"></script>
-```
-
-The GitHub CDN base was verified with `https://cdn.jsdelivr.net/gh/omarmir/nmt-enfr@main/package.json`. The minified bundle URL will return 200 after `dist/nmt-enfr.min.js` is committed to `main` or a tagged release.
+Pin a release tag instead of `main` when a release includes the bundle.
 
 ## Basic Usage
 
