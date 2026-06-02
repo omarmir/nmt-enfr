@@ -26,6 +26,9 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "demo:dev": "pnpm --dir demo dev",
+    "demo:build": "npm run build && pnpm --dir demo build",
+    "demo:preview": "pnpm --dir demo preview",
     "test": "npm run test:check && npm run test:unit",
     "test:check": "node --check src/index.js && node --check src/client.js && node --check src/glossary.js && node --check src/planning.js && node --check src/text.js && node --check src/document.js && node --check src/worker.js && node --check test/*.test.mjs",
     "test:unit": "node --test test/*.test.mjs"
