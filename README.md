@@ -4,6 +4,10 @@ Framework-neutral browser EN-FR and FR-EN neural machine translation for Transfo
 
 `nmt-enfr` is a headless runtime. It gives a site the translation client, worker orchestration, glossary helpers, and DOCX/PPTX helpers, but leaves the interface to the host app. Use it from static HTML, HTMX/GCDS, React/Shadcn, or any other frontend.
 
+## Demo
+
+Try the browser demo at <https://omarmir.github.io/nmt-enfr/>.
+
 ## Install
 
 ```bash
